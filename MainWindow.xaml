@@ -1,0 +1,22 @@
+<Window x:Class="DoscarVgaDriver.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Configuración" Width="340" SizeToContent="Height"
+        WindowStartupLocation="CenterScreen" 
+        ResizeMode="CanMinimize ">
+    <StackPanel Margin="15">
+        <TextBlock Text="Puerto COM"/>
+        <ComboBox x:Name="CmbComPort" IsEditable="True" Margin="0,2,0,10"/>
+
+        <TextBlock Text="Velocidad (baudios)"/>
+        <ComboBox x:Name="CmbBaudios" Margin="0,2,0,10"/>
+
+        <TextBlock Text="Caracteres por línea"/>
+        <TextBox x:Name="TxtCharacters" Margin="0,2,0,10"/>
+        
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Guardar" Width="80" Margin="0,0,8,0" Click="Save_Click"/>
+            <Button Content="Reiniciar Pantalla" Width="100" IsDefault="True" Click="Visor_Restart"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

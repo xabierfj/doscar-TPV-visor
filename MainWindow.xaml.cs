@@ -21,6 +21,9 @@ namespace DoscarVgaDriver
             TxtCharacters.Text = _settings.CharsPerLine.ToString();
             TxtHeader.Text = _settings.HeaderText;
             TxtCurrency.Text = _settings.CurrencySymbol;
+
+            ChkDevMode.IsChecked = _settings.DevMode;
+
             TxtTotalKeyword.Text = _settings.TotalKeyword;
             TxtIdleKeyword.Text = _settings.IdleKeyword;
             ChkDebugLog.IsChecked = _settings.EnableDebugLog;
@@ -60,6 +63,7 @@ namespace DoscarVgaDriver
             _settings.CharsPerLine = characters;
             _settings.HeaderText = TxtHeader.Text;
             _settings.CurrencySymbol = TxtCurrency.Text;
+            _settings.DevMode = ChkDevMode.IsChecked == true;
             _settings.TotalKeyword = TxtTotalKeyword.Text.Trim();
             _settings.IdleKeyword = TxtIdleKeyword.Text.Trim();
             _settings.EnableDebugLog = ChkDebugLog.IsChecked == true;

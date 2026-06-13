@@ -20,6 +20,9 @@ namespace DoscarVgaDriver
         // When true, the raw frame bytes are logged to the console as hex.
         public bool EnableDebugLog { get; set; } = false;
 
+        // Unlocks advanced/developer-only fields (panel keywords, etc.) in the config UI.
+        public bool DevMode { get; set; } = false;
+
         private static string RutaArchivo => Path.Combine(AppContext.BaseDirectory, "config.json");
 
         public static AppSettings Cargar()

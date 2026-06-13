@@ -130,7 +130,7 @@ namespace DoscarVgaDriver
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                DebugLog.Write($"Error abriendo el puerto: {ex.Message}");
             }
         }
 
@@ -164,7 +164,7 @@ namespace DoscarVgaDriver
                 var read = _serialPort.Read(bytes, 0, count);
 
                 if (_settings.EnableDebugLog)
-                    Console.WriteLine(BitConverter.ToString(bytes, 0, read));
+                    DebugLog.Write(BitConverter.ToString(bytes, 0, read));
                 _bufferBuilder.Append(_serialPort.Encoding.GetString(bytes, 0, read));
                 ProcessBuffer();
             }
@@ -232,7 +232,7 @@ namespace DoscarVgaDriver
             Dispatcher.InvokeAsync(() =>
             {
                 if (_settings.EnableDebugLog)
-                    Console.WriteLine($"Visor: [{line1}] / [{line2}]");
+                    DebugLog.Write($"Visor: [{line1}] / [{line2}]");
                 if (line1 == _settings.TotalKeyword)
                 {
                     TxtTotalPrice.Text = $"{line2} {_settings.CurrencySymbol}";

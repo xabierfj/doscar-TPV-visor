@@ -8,6 +8,7 @@ namespace DoscarVgaDriver
     {
         private AppSettings _settings;
         private VisorWindow _visor;
+        private DebugConsoleWindow _debugConsole;
 
         public MainWindow()
         {
@@ -39,7 +40,11 @@ namespace DoscarVgaDriver
             TxtTotalKeyword.Text = _settings.TotalKeyword;
             TxtIdleKeyword.Text = _settings.IdleKeyword;
             ChkDebugLog.IsChecked = _settings.EnableDebugLog;
-            Loaded += (_, _) => OpenVisor();
+            Loaded += (_, _) =>
+            {
+                OpenVisor();
+                if (_settings.EnableDebugLog) OpenDebugConsole();
+            };
         }
 
         private static string[] BuildMonitorList()
@@ -118,6 +123,33 @@ namespace DoscarVgaDriver
             ChkFullScreen.IsChecked = _visor.ToggleFullScreen();
         }
 
+        private void DebugLog_Toggle(object sender, RoutedEventArgs e)
+        {
+            _settings.EnableDebugLog = ChkDebugLog.IsChecked == true;
+            if (_settings.EnableDebugLog)
+                OpenDebugConsole();
+            else
+                _debugConsole?.Close();
+        }
+
+        private void OpenDebugConsole()
+        {
+            if (_debugConsole != null)
+            {
+                _debugConsole.Activate();
+                return;
+            }
+            _debugConsole = new DebugConsoleWindow { Owner = this };
+            // Closing the console window mirrors back to "logging off".
+            _debugConsole.Closed += (_, _) =>
+            {
+                _debugConsole = null;
+                ChkDebugLog.IsChecked = false;
+                _settings.EnableDebugLog = false;
+            };
+            _debugConsole.Show();
+        }
+
         private void Visor_Restart(object sender, RoutedEventArgs e)
         {
             if (!ValidateAndSave()) return;
@@ -127,6 +159,7 @@ namespace DoscarVgaDriver
 
         protected override void OnClosed(EventArgs e)
         {
+            _debugConsole?.Close();
             _visor?.Close();
             base.OnClosed(e);
         }

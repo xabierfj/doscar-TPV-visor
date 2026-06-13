@@ -1,6 +1,7 @@
 using System;
 using System.IO.Ports;
 using System.Windows;
+using System.Windows.Media;
 
 namespace DoscarVgaDriver
 {
@@ -8,6 +9,8 @@ namespace DoscarVgaDriver
     {
         private AppSettings _settings;
         private VisorWindow _visor;
+        private DebugConsoleWindow _debugConsole;
+        private System.Windows.Threading.DispatcherTimer _statusTimer;
 
         public MainWindow()
         {
@@ -19,15 +22,68 @@ namespace DoscarVgaDriver
             CmbBaudios.ItemsSource = new[] { 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200 };
             CmbBaudios.SelectedItem = _settings.BaudRate;
             TxtCharacters.Text = _settings.CharsPerLine.ToString();
-            Loaded += (_, _) => OpenVisor();
+            TxtHeader.Text = _settings.HeaderText;
+            TxtCurrency.Text = _settings.CurrencySymbol;
+
+            CmbParity.ItemsSource = new[] { "None", "Even", "Odd", "Mark", "Space" };
+            CmbParity.SelectedItem = _settings.Parity;
+            CmbEncoding.ItemsSource = new[] { "ASCII", "ISO-8859-1", "UTF-8" };
+            CmbEncoding.SelectedItem = _settings.Encoding;
+
+            var monitors = BuildMonitorList();
+            CmbMonitor.ItemsSource = monitors;
+            // Item 0 is "Auto" (TargetMonitor -1); screen N maps to item N+1.
+            var monitorIndex = _settings.TargetMonitor + 1;
+            CmbMonitor.SelectedIndex = monitorIndex >= 0 && monitorIndex < monitors.Length ? monitorIndex : 0;
+
+            ChkStartFullScreen.IsChecked = _settings.StartFullScreen;
+            ChkDevMode.IsChecked = _settings.DevMode;
+
+            TxtTotalKeyword.Text = _settings.TotalKeyword;
+            TxtIdleKeyword.Text = _settings.IdleKeyword;
+            ChkDebugLog.IsChecked = _settings.EnableDebugLog;
+
+            _statusTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _statusTimer.Tick += (_, _) => UpdateStatus();
+            _statusTimer.Start();
+
+            Loaded += (_, _) =>
+            {
+                OpenVisor();
+                if (_settings.EnableDebugLog) OpenDebugConsole();
+            };
+        }
+
+        private static string[] BuildMonitorList()
+        {
+            var screens = System.Windows.Forms.Screen.AllScreens;
+            var items = new string[screens.Length + 1];
+            items[0] = "Automático";
+            for (int i = 0; i < screens.Length; i++)
+            {
+                var b = screens[i].Bounds;
+                var tag = screens[i].Primary ? " (principal)" : "";
+                items[i + 1] = $"{i + 1}: {b.Width}x{b.Height}{tag}";
+            }
+            return items;
         }
 
         private void OpenVisor()
         {
             if (_visor != null) return;
             _visor = new VisorWindow(_settings);
-            _visor.Closed += (_, _) => _visor = null;
+            _visor.ConnectionChanged += OnConnectionChanged;
+            _visor.Closed += (_, _) =>
+            {
+                _visor = null;
+                ChkFullScreen.IsChecked = false;
+                UpdateStatus();
+            };
+            // Kiosk mode auto-engages fullscreen on the visor's Loaded (secondary
+            // monitor present), so mirror the real state once it has loaded.
+            _visor.Loaded += (_, _) => ChkFullScreen.IsChecked = _visor?.IsFullScreen ?? false;
             _visor.Show();
+            UpdateStatus();
         }
 
         private bool ValidateAndSave()
@@ -46,6 +102,17 @@ namespace DoscarVgaDriver
             _settings.PortName = CmbComPort.Text.Trim();
             if (CmbBaudios.SelectedItem is int baudios) _settings.BaudRate = baudios;
             _settings.CharsPerLine = characters;
+            _settings.HeaderText = TxtHeader.Text;
+            _settings.CurrencySymbol = TxtCurrency.Text;
+            if (CmbParity.SelectedItem is string parity) _settings.Parity = parity;
+            if (CmbEncoding.SelectedItem is string encoding) _settings.Encoding = encoding;
+            // Item 0 is "Auto" (-1); screen N is at item N+1.
+            _settings.TargetMonitor = CmbMonitor.SelectedIndex - 1;
+            _settings.StartFullScreen = ChkStartFullScreen.IsChecked == true;
+            _settings.DevMode = ChkDevMode.IsChecked == true;
+            _settings.TotalKeyword = TxtTotalKeyword.Text.Trim();
+            _settings.IdleKeyword = TxtIdleKeyword.Text.Trim();
+            _settings.EnableDebugLog = ChkDebugLog.IsChecked == true;
             _settings.Guardar();
             return true;
         }
@@ -56,6 +123,61 @@ namespace DoscarVgaDriver
         }
         
 
+        private void OnConnectionChanged(bool connected) => UpdateStatus();
+
+        private void UpdateStatus()
+        {
+            if (_visor == null || !_visor.IsConnected)
+            {
+                TxtStatus.Text = "● Desconectado";
+                TxtStatus.Foreground = Brushes.Firebrick;
+                return;
+            }
+            var last = _visor.LastFrameUtc;
+            var ago = last.HasValue
+                ? $"  ·  último dato hace {(int)(DateTime.UtcNow - last.Value).TotalSeconds}s"
+                : "";
+            TxtStatus.Text = $"● Conectado{ago}";
+            TxtStatus.Foreground = Brushes.ForestGreen;
+        }
+
+        private void FullScreen_Toggle(object sender, RoutedEventArgs e)
+        {
+            if (_visor == null)
+            {
+                ChkFullScreen.IsChecked = false;
+                return;
+            }
+            ChkFullScreen.IsChecked = _visor.ToggleFullScreen();
+        }
+
+        private void DebugLog_Toggle(object sender, RoutedEventArgs e)
+        {
+            _settings.EnableDebugLog = ChkDebugLog.IsChecked == true;
+            if (_settings.EnableDebugLog)
+                OpenDebugConsole();
+            else
+                _debugConsole?.Close();
+        }
+
+        private void OpenDebugConsole()
+        {
+            if (_debugConsole != null)
+            {
+                _debugConsole.Activate();
+                return;
+            }
+            _debugConsole = new DebugConsoleWindow { Owner = this };
+            // Closing the console window mirrors back to "logging off".
+            _debugConsole.Closed += (_, _) =>
+            {
+                _debugConsole = null;
+                ChkDebugLog.IsChecked = false;
+                _settings.EnableDebugLog = false;
+            };
+            _debugConsole.Show();
+        }
+
         private void Visor_Restart(object sender, RoutedEventArgs e)
         {
             if (!ValidateAndSave()) return;
@@ -65,6 +187,8 @@ namespace DoscarVgaDriver
 
         protected override void OnClosed(EventArgs e)
         {
+            _statusTimer?.Stop();
+            _debugConsole?.Close();
             _visor?.Close();
             base.OnClosed(e);
         }

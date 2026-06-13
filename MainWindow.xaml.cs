@@ -29,10 +29,12 @@ namespace DoscarVgaDriver
             _visor.Closed += (_, _) =>
             {
                 _visor = null;
-                BtnFullScreen.IsChecked = false;
+                ChkFullScreen.IsChecked = false;
             };
+            // Kiosk mode auto-engages fullscreen on the visor's Loaded (secondary
+            // monitor present), so mirror the real state once it has loaded.
+            _visor.Loaded += (_, _) => ChkFullScreen.IsChecked = _visor?.IsFullScreen ?? false;
             _visor.Show();
-            BtnFullScreen.IsChecked = false;
         }
 
         private bool ValidateAndSave()
@@ -65,10 +67,10 @@ namespace DoscarVgaDriver
         {
             if (_visor == null)
             {
-                BtnFullScreen.IsChecked = false;
+                ChkFullScreen.IsChecked = false;
                 return;
             }
-            BtnFullScreen.IsChecked = _visor.ToggleFullScreen();
+            ChkFullScreen.IsChecked = _visor.ToggleFullScreen();
         }
 
         private void Visor_Restart(object sender, RoutedEventArgs e)

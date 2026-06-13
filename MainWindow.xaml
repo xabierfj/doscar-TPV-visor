@@ -14,8 +14,8 @@
         <TextBlock Text="Caracteres por línea"/>
         <TextBox x:Name="TxtCharacters" Margin="0,2,0,10"/>
         
-        <ToggleButton x:Name="BtnFullScreen" Content="Pantalla completa" Margin="0,0,0,10"
-                      Click="FullScreen_Toggle"/>
+        <CheckBox x:Name="ChkFullScreen" Content="Pantalla completa" Margin="0,0,0,10"
+                  Click="FullScreen_Toggle"/>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Guardar" Width="80" Margin="0,0,8,0" Click="Save_Click"/>

@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 
 namespace DoscarVgaDriver
 {
@@ -28,24 +29,16 @@ namespace DoscarVgaDriver
         }
 
         // Fullscreen borderless on the secondary monitor (the 7" customer panel).
-        // With a single monitor (development) it stays a normal window.
+        // With a single monitor (development) it stays a normal window that can be
+        // sent fullscreen on demand via the config window's checkbox.
         private void ConfigureKioskMode()
         {
             var secondary = System.Windows.Forms.Screen.AllScreens.FirstOrDefault(s => !s.Primary);
             if (secondary == null) return;
 
-            WindowStyle = WindowStyle.None;
-            ResizeMode = ResizeMode.NoResize;
-            Topmost = true;
             ShowInTaskbar = false;
-            WindowStartupLocation = WindowStartupLocation.Manual;
-            Left = secondary.Bounds.Left;
-            Top = secondary.Bounds.Top;
-            Width = secondary.Bounds.Width;
-            Height = secondary.Bounds.Height;
-            Loaded += (_, _) => WindowState = WindowState.Maximized;
-
             SetThreadExecutionState(EsContinuous | EsDisplayRequired);
+            Loaded += (_, _) => EnterFullScreen(secondary);
         }
 
         [DllImport("kernel32.dll")]
@@ -53,35 +46,66 @@ namespace DoscarVgaDriver
         private const uint EsContinuous = 0x80000000;
         private const uint EsDisplayRequired = 0x00000002;
 
-        // Dev helper: toggle borderless fullscreen on the current monitor so the
-        // panel can be previewed without a secondary display. Returns the new state.
+        // Single source of truth for fullscreen, shared by kiosk startup and the
+        // dev checkbox. Returns the new state so the checkbox can mirror it.
         private bool _isFullScreen;
         private WindowStyle _windowedStyle;
         private ResizeMode _windowedResizeMode;
-        private WindowState _windowedState;
+        private bool _windowedTopmost;
+        private double _windowedLeft, _windowedTop, _windowedWidth, _windowedHeight;
+
+        public bool IsFullScreen => _isFullScreen;
 
         public bool ToggleFullScreen()
         {
             if (_isFullScreen)
-            {
-                WindowStyle = _windowedStyle;
-                ResizeMode = _windowedResizeMode;
-                WindowState = _windowedState;
-            }
+                ExitFullScreen();
             else
-            {
-                _windowedStyle = WindowStyle;
-                _windowedResizeMode = ResizeMode;
-                _windowedState = WindowState;
-
-                WindowStyle = WindowStyle.None;
-                ResizeMode = ResizeMode.NoResize;
-                WindowState = WindowState.Normal;
-                WindowState = WindowState.Maximized;
-            }
-
-            _isFullScreen = !_isFullScreen;
+                EnterFullScreen(System.Windows.Forms.Screen.FromHandle(new WindowInteropHelper(this).Handle));
             return _isFullScreen;
+        }
+
+        private void EnterFullScreen(System.Windows.Forms.Screen screen)
+        {
+            if (_isFullScreen) return;
+
+            _windowedStyle = WindowStyle;
+            _windowedResizeMode = ResizeMode;
+            _windowedTopmost = Topmost;
+            _windowedLeft = Left;
+            _windowedTop = Top;
+            _windowedWidth = Width;
+            _windowedHeight = Height;
+
+            // Explicit bounds are more reliable than WindowState.Maximized for a
+            // borderless window. Topmost + Activate brings it above the config window.
+            WindowStyle = WindowStyle.None;
+            ResizeMode = ResizeMode.NoResize;
+            WindowState = WindowState.Normal;
+            Left = screen.Bounds.Left;
+            Top = screen.Bounds.Top;
+            Width = screen.Bounds.Width;
+            Height = screen.Bounds.Height;
+            Topmost = true;
+            Activate();
+
+            _isFullScreen = true;
+        }
+
+        private void ExitFullScreen()
+        {
+            if (!_isFullScreen) return;
+
+            WindowStyle = _windowedStyle;
+            ResizeMode = _windowedResizeMode;
+            Topmost = _windowedTopmost;
+            WindowState = WindowState.Normal;
+            Left = _windowedLeft;
+            Top = _windowedTop;
+            Width = _windowedWidth;
+            Height = _windowedHeight;
+
+            _isFullScreen = false;
         }
 
         private void PortInitialisation()

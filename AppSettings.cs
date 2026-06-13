@@ -23,6 +23,11 @@ namespace DoscarVgaDriver
         // Unlocks advanced/developer-only fields (panel keywords, etc.) in the config UI.
         public bool DevMode { get; set; } = false;
 
+        // Index into Screen.AllScreens for the visor window. -1 = auto (first non-primary).
+        public int TargetMonitor { get; set; } = -1;
+        // Open the visor in fullscreen on launch.
+        public bool StartFullScreen { get; set; } = true;
+
         // Serial parity: "None", "Even", "Odd", "Mark", "Space".
         public string Parity { get; set; } = "None";
         // Text encoding used to decode the serial stream.

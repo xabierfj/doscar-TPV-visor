@@ -26,6 +26,11 @@
         <TextBlock Text="Codificación"/>
         <ComboBox x:Name="CmbEncoding" Margin="0,2,0,10"/>
 
+        <TextBlock Text="Monitor"/>
+        <ComboBox x:Name="CmbMonitor" Margin="0,2,0,10"/>
+
+        <CheckBox x:Name="ChkStartFullScreen" Content="Iniciar en pantalla completa" Margin="0,0,0,10"/>
+
         <CheckBox x:Name="ChkFullScreen" Content="Pantalla completa" Margin="0,0,0,10"
                   Click="FullScreen_Toggle"/>
 

@@ -27,12 +27,33 @@ namespace DoscarVgaDriver
             CmbEncoding.ItemsSource = new[] { "ASCII", "ISO-8859-1", "UTF-8" };
             CmbEncoding.SelectedItem = _settings.Encoding;
 
+            var monitors = BuildMonitorList();
+            CmbMonitor.ItemsSource = monitors;
+            // Item 0 is "Auto" (TargetMonitor -1); screen N maps to item N+1.
+            var monitorIndex = _settings.TargetMonitor + 1;
+            CmbMonitor.SelectedIndex = monitorIndex >= 0 && monitorIndex < monitors.Length ? monitorIndex : 0;
+
+            ChkStartFullScreen.IsChecked = _settings.StartFullScreen;
             ChkDevMode.IsChecked = _settings.DevMode;
 
             TxtTotalKeyword.Text = _settings.TotalKeyword;
             TxtIdleKeyword.Text = _settings.IdleKeyword;
             ChkDebugLog.IsChecked = _settings.EnableDebugLog;
             Loaded += (_, _) => OpenVisor();
+        }
+
+        private static string[] BuildMonitorList()
+        {
+            var screens = System.Windows.Forms.Screen.AllScreens;
+            var items = new string[screens.Length + 1];
+            items[0] = "Automático";
+            for (int i = 0; i < screens.Length; i++)
+            {
+                var b = screens[i].Bounds;
+                var tag = screens[i].Primary ? " (principal)" : "";
+                items[i + 1] = $"{i + 1}: {b.Width}x{b.Height}{tag}";
+            }
+            return items;
         }
 
         private void OpenVisor()
@@ -70,6 +91,9 @@ namespace DoscarVgaDriver
             _settings.CurrencySymbol = TxtCurrency.Text;
             if (CmbParity.SelectedItem is string parity) _settings.Parity = parity;
             if (CmbEncoding.SelectedItem is string encoding) _settings.Encoding = encoding;
+            // Item 0 is "Auto" (-1); screen N is at item N+1.
+            _settings.TargetMonitor = CmbMonitor.SelectedIndex - 1;
+            _settings.StartFullScreen = ChkStartFullScreen.IsChecked == true;
             _settings.DevMode = ChkDevMode.IsChecked == true;
             _settings.TotalKeyword = TxtTotalKeyword.Text.Trim();
             _settings.IdleKeyword = TxtIdleKeyword.Text.Trim();

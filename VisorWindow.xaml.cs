@@ -33,12 +33,23 @@ namespace DoscarVgaDriver
 
         private void ConfigureKioskMode()
         {
-            var secondary = System.Windows.Forms.Screen.AllScreens.FirstOrDefault(s => !s.Primary);
-            if (secondary == null) return;
+            if (!_settings.StartFullScreen) return;
+
+            var target = ResolveTargetScreen();
+            if (target == null) return;
 
             ShowInTaskbar = false;
             SetThreadExecutionState(EsContinuous | EsDisplayRequired);
-            Loaded += (_, _) => EnterFullScreen(secondary);
+            Loaded += (_, _) => EnterFullScreen(target);
+        }
+
+        // Configured monitor if valid, otherwise the first non-primary screen, otherwise the primary.
+        private System.Windows.Forms.Screen ResolveTargetScreen()
+        {
+            var screens = System.Windows.Forms.Screen.AllScreens;
+            if (_settings.TargetMonitor >= 0 && _settings.TargetMonitor < screens.Length)
+                return screens[_settings.TargetMonitor];
+            return screens.FirstOrDefault(s => !s.Primary) ?? System.Windows.Forms.Screen.PrimaryScreen;
         }
 
         [DllImport("kernel32.dll")]

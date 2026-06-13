@@ -19,7 +19,13 @@
 
         <TextBlock Text="Símbolo de moneda"/>
         <TextBox x:Name="TxtCurrency" Margin="0,2,0,10"/>
-        
+
+        <TextBlock Text="Paridad"/>
+        <ComboBox x:Name="CmbParity" Margin="0,2,0,10"/>
+
+        <TextBlock Text="Codificación"/>
+        <ComboBox x:Name="CmbEncoding" Margin="0,2,0,10"/>
+
         <CheckBox x:Name="ChkFullScreen" Content="Pantalla completa" Margin="0,0,0,10"
                   Click="FullScreen_Toggle"/>
 

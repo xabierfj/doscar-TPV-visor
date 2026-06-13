@@ -108,8 +108,8 @@ namespace DoscarVgaDriver
 
         private void PortInitialisation()
         {
-            _serialPort = new SerialPort(_settings.PortName, _settings.BaudRate, Parity.None, 8, StopBits.One);
-            _serialPort.Encoding = System.Text.Encoding.GetEncoding("ISO-8859-1");
+            _serialPort = new SerialPort(_settings.PortName, _settings.BaudRate, ParseParity(_settings.Parity), 8, StopBits.One);
+            _serialPort.Encoding = ResolveEncoding(_settings.Encoding);
             _serialPort.DataReceived += Port_DataReceived;
             try
             {
@@ -121,6 +121,15 @@ namespace DoscarVgaDriver
             {
                 Console.WriteLine(ex.Message);
             }
+        }
+
+        private static Parity ParseParity(string value)
+            => Enum.TryParse<Parity>(value, true, out var parity) ? parity : Parity.None;
+
+        private static System.Text.Encoding ResolveEncoding(string name)
+        {
+            try { return System.Text.Encoding.GetEncoding(name); }
+            catch { return System.Text.Encoding.GetEncoding("ISO-8859-1"); }
         }
 
         private void PortClose()

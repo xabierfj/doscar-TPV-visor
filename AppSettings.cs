@@ -23,6 +23,11 @@ namespace DoscarVgaDriver
         // Unlocks advanced/developer-only fields (panel keywords, etc.) in the config UI.
         public bool DevMode { get; set; } = false;
 
+        // Serial parity: "None", "Even", "Odd", "Mark", "Space".
+        public string Parity { get; set; } = "None";
+        // Text encoding used to decode the serial stream.
+        public string Encoding { get; set; } = "ISO-8859-1";
+
         private static string RutaArchivo => Path.Combine(AppContext.BaseDirectory, "config.json");
 
         public static AppSettings Cargar()

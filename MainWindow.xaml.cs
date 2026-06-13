@@ -22,6 +22,11 @@ namespace DoscarVgaDriver
             TxtHeader.Text = _settings.HeaderText;
             TxtCurrency.Text = _settings.CurrencySymbol;
 
+            CmbParity.ItemsSource = new[] { "None", "Even", "Odd", "Mark", "Space" };
+            CmbParity.SelectedItem = _settings.Parity;
+            CmbEncoding.ItemsSource = new[] { "ASCII", "ISO-8859-1", "UTF-8" };
+            CmbEncoding.SelectedItem = _settings.Encoding;
+
             ChkDevMode.IsChecked = _settings.DevMode;
 
             TxtTotalKeyword.Text = _settings.TotalKeyword;
@@ -63,6 +68,8 @@ namespace DoscarVgaDriver
             _settings.CharsPerLine = characters;
             _settings.HeaderText = TxtHeader.Text;
             _settings.CurrencySymbol = TxtCurrency.Text;
+            if (CmbParity.SelectedItem is string parity) _settings.Parity = parity;
+            if (CmbEncoding.SelectedItem is string encoding) _settings.Encoding = encoding;
             _settings.DevMode = ChkDevMode.IsChecked == true;
             _settings.TotalKeyword = TxtTotalKeyword.Text.Trim();
             _settings.IdleKeyword = TxtIdleKeyword.Text.Trim();

@@ -26,8 +26,13 @@ namespace DoscarVgaDriver
         {
             if (_visor != null) return;
             _visor = new VisorWindow(_settings);
-            _visor.Closed += (_, _) => _visor = null;
+            _visor.Closed += (_, _) =>
+            {
+                _visor = null;
+                BtnFullScreen.IsChecked = false;
+            };
             _visor.Show();
+            BtnFullScreen.IsChecked = false;
         }
 
         private bool ValidateAndSave()
@@ -55,6 +60,16 @@ namespace DoscarVgaDriver
             ValidateAndSave();
         }
         
+
+        private void FullScreen_Toggle(object sender, RoutedEventArgs e)
+        {
+            if (_visor == null)
+            {
+                BtnFullScreen.IsChecked = false;
+                return;
+            }
+            BtnFullScreen.IsChecked = _visor.ToggleFullScreen();
+        }
 
         private void Visor_Restart(object sender, RoutedEventArgs e)
         {

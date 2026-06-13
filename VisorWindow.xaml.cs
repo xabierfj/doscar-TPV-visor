@@ -53,6 +53,37 @@ namespace DoscarVgaDriver
         private const uint EsContinuous = 0x80000000;
         private const uint EsDisplayRequired = 0x00000002;
 
+        // Dev helper: toggle borderless fullscreen on the current monitor so the
+        // panel can be previewed without a secondary display. Returns the new state.
+        private bool _isFullScreen;
+        private WindowStyle _windowedStyle;
+        private ResizeMode _windowedResizeMode;
+        private WindowState _windowedState;
+
+        public bool ToggleFullScreen()
+        {
+            if (_isFullScreen)
+            {
+                WindowStyle = _windowedStyle;
+                ResizeMode = _windowedResizeMode;
+                WindowState = _windowedState;
+            }
+            else
+            {
+                _windowedStyle = WindowStyle;
+                _windowedResizeMode = ResizeMode;
+                _windowedState = WindowState;
+
+                WindowStyle = WindowStyle.None;
+                ResizeMode = ResizeMode.NoResize;
+                WindowState = WindowState.Normal;
+                WindowState = WindowState.Maximized;
+            }
+
+            _isFullScreen = !_isFullScreen;
+            return _isFullScreen;
+        }
+
         private void PortInitialisation()
         {
             _serialPort = new SerialPort(_settings.PortName, _settings.BaudRate, Parity.None, 8, StopBits.One);
@@ -177,7 +208,8 @@ namespace DoscarVgaDriver
         {
             if (e.Key == Key.Escape)
             {
-                Close();
+                if (_isFullScreen) ToggleFullScreen();
+                else Close();
             }
         }
 

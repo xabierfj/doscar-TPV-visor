@@ -51,6 +51,8 @@
                       Click="DebugLog_Toggle"/>
         </StackPanel>
 
+        <TextBlock x:Name="TxtStatus" Margin="0,4,0,8" FontWeight="SemiBold" Text="● Desconectado"/>
+
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Guardar" Width="80" Margin="0,0,8,0" Click="Save_Click"/>
             <Button Content="Reiniciar Pantalla" Width="100" IsDefault="True" Click="Visor_Restart"/>

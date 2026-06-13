@@ -1,6 +1,7 @@
 using System;
 using System.IO.Ports;
 using System.Windows;
+using System.Windows.Media;
 
 namespace DoscarVgaDriver
 {
@@ -9,6 +10,7 @@ namespace DoscarVgaDriver
         private AppSettings _settings;
         private VisorWindow _visor;
         private DebugConsoleWindow _debugConsole;
+        private System.Windows.Threading.DispatcherTimer _statusTimer;
 
         public MainWindow()
         {
@@ -40,6 +42,11 @@ namespace DoscarVgaDriver
             TxtTotalKeyword.Text = _settings.TotalKeyword;
             TxtIdleKeyword.Text = _settings.IdleKeyword;
             ChkDebugLog.IsChecked = _settings.EnableDebugLog;
+
+            _statusTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _statusTimer.Tick += (_, _) => UpdateStatus();
+            _statusTimer.Start();
+
             Loaded += (_, _) =>
             {
                 OpenVisor();
@@ -65,15 +72,18 @@ namespace DoscarVgaDriver
         {
             if (_visor != null) return;
             _visor = new VisorWindow(_settings);
+            _visor.ConnectionChanged += OnConnectionChanged;
             _visor.Closed += (_, _) =>
             {
                 _visor = null;
                 ChkFullScreen.IsChecked = false;
+                UpdateStatus();
             };
             // Kiosk mode auto-engages fullscreen on the visor's Loaded (secondary
             // monitor present), so mirror the real state once it has loaded.
             _visor.Loaded += (_, _) => ChkFullScreen.IsChecked = _visor?.IsFullScreen ?? false;
             _visor.Show();
+            UpdateStatus();
         }
 
         private bool ValidateAndSave()
@@ -112,6 +122,24 @@ namespace DoscarVgaDriver
             ValidateAndSave();
         }
         
+
+        private void OnConnectionChanged(bool connected) => UpdateStatus();
+
+        private void UpdateStatus()
+        {
+            if (_visor == null || !_visor.IsConnected)
+            {
+                TxtStatus.Text = "● Desconectado";
+                TxtStatus.Foreground = Brushes.Firebrick;
+                return;
+            }
+            var last = _visor.LastFrameUtc;
+            var ago = last.HasValue
+                ? $"  ·  último dato hace {(int)(DateTime.UtcNow - last.Value).TotalSeconds}s"
+                : "";
+            TxtStatus.Text = $"● Conectado{ago}";
+            TxtStatus.Foreground = Brushes.ForestGreen;
+        }
 
         private void FullScreen_Toggle(object sender, RoutedEventArgs e)
         {
@@ -159,6 +187,7 @@ namespace DoscarVgaDriver
 
         protected override void OnClosed(EventArgs e)
         {
+            _statusTimer?.Stop();
             _debugConsole?.Close();
             _visor?.Close();
             base.OnClosed(e);

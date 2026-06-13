@@ -22,6 +22,15 @@ namespace DoscarVgaDriver
         private readonly StringBuilder _bufferBuilder = new StringBuilder();
         private string _line1 = string.Empty;
 
+        private readonly object _portLock = new object();
+        private System.Windows.Threading.DispatcherTimer _reconnectTimer;
+        private bool _connected;
+
+        // Raised on the UI thread whenever the serial connection opens or drops.
+        public event Action<bool> ConnectionChanged;
+        public bool IsConnected => _connected;
+        public DateTime? LastFrameUtc { get; private set; }
+
         public VisorWindow(AppSettings settings)
         {
             InitializeComponent();
@@ -119,19 +128,62 @@ namespace DoscarVgaDriver
 
         private void PortInitialisation()
         {
-            _serialPort = new SerialPort(_settings.PortName, _settings.BaudRate, ParseParity(_settings.Parity), 8, StopBits.One);
-            _serialPort.Encoding = ResolveEncoding(_settings.Encoding);
-            _serialPort.DataReceived += Port_DataReceived;
-            try
+            // Poll for the port so the display recovers on its own after a cable
+            // drop or POS reboot instead of needing the app restarted.
+            _reconnectTimer = new System.Windows.Threading.DispatcherTimer
             {
-                _serialPort.DtrEnable = true;
-                _serialPort.RtsEnable = true;
-                _serialPort.Open();
-            }
-            catch (Exception ex)
+                Interval = TimeSpan.FromSeconds(3)
+            };
+            _reconnectTimer.Tick += (_, _) =>
             {
-                DebugLog.Write($"Error abriendo el puerto: {ex.Message}");
+                if (_serialPort == null || !_serialPort.IsOpen) TryOpenPort();
+            };
+            _reconnectTimer.Start();
+            TryOpenPort();
+        }
+
+        private void TryOpenPort()
+        {
+            lock (_portLock)
+            {
+                if (_serialPort != null && _serialPort.IsOpen) return;
+                try
+                {
+                    _serialPort = new SerialPort(_settings.PortName, _settings.BaudRate, ParseParity(_settings.Parity), 8, StopBits.One);
+                    _serialPort.Encoding = ResolveEncoding(_settings.Encoding);
+                    _serialPort.DataReceived += Port_DataReceived;
+                    _serialPort.DtrEnable = true;
+                    _serialPort.RtsEnable = true;
+                    _serialPort.Open();
+                    DebugLog.Write($"Puerto {_settings.PortName} abierto.");
+                    SetConnected(true);
+                }
+                catch (Exception ex)
+                {
+                    DebugLog.Write($"Error abriendo el puerto: {ex.Message}");
+                    DisposePort();
+                    SetConnected(false);
+                }
             }
+        }
+
+        private void DisposePort()
+        {
+            lock (_portLock)
+            {
+                if (_serialPort == null) return;
+                _serialPort.DataReceived -= Port_DataReceived;
+                try { if (_serialPort.IsOpen) _serialPort.Close(); } catch { }
+                _serialPort.Dispose();
+                _serialPort = null;
+            }
+        }
+
+        private void SetConnected(bool connected)
+        {
+            if (_connected == connected) return;
+            _connected = connected;
+            Dispatcher.InvokeAsync(() => ConnectionChanged?.Invoke(connected));
         }
 
         private static Parity ParseParity(string value)
@@ -145,11 +197,10 @@ namespace DoscarVgaDriver
 
         private void PortClose()
         {
-            if (_serialPort == null) return;
-            _serialPort.DataReceived -= Port_DataReceived;
-            if (_serialPort.IsOpen) _serialPort.Close();
-            _serialPort.Dispose();
-            _serialPort = null;
+            _reconnectTimer?.Stop();
+            _reconnectTimer = null;
+            DisposePort();
+            SetConnected(false);
         }
 
         private void Port_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -162,6 +213,7 @@ namespace DoscarVgaDriver
 
                 var bytes = new byte[count];
                 var read = _serialPort.Read(bytes, 0, count);
+                LastFrameUtc = DateTime.UtcNow;
 
                 if (_settings.EnableDebugLog)
                     DebugLog.Write(BitConverter.ToString(bytes, 0, read));
@@ -170,7 +222,11 @@ namespace DoscarVgaDriver
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
+                // A read failure usually means the adapter was unplugged; drop the
+                // port and let the reconnect timer reopen it.
+                DebugLog.Write($"Conexión perdida: {ex.Message}");
+                DisposePort();
+                SetConnected(false);
             }
         }
 

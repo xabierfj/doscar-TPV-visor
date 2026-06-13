@@ -26,6 +26,7 @@ namespace DoscarVgaDriver
         {
             InitializeComponent();
             _settings = settings;
+            TxtWelcome.Text = _settings.HeaderText;
             ConfigureKioskMode();
             PortInitialisation();
         }
@@ -142,7 +143,8 @@ namespace DoscarVgaDriver
                 var bytes = new byte[count];
                 var read = _serialPort.Read(bytes, 0, count);
 
-                Console.WriteLine(BitConverter.ToString(bytes, 0, read));
+                if (_settings.EnableDebugLog)
+                    Console.WriteLine(BitConverter.ToString(bytes, 0, read));
                 _bufferBuilder.Append(_serialPort.Encoding.GetString(bytes, 0, read));
                 ProcessBuffer();
             }
@@ -209,13 +211,14 @@ namespace DoscarVgaDriver
         {
             Dispatcher.InvokeAsync(() =>
             {
-                Console.WriteLine($"Visor: [{line1}] / [{line2}]");
-                if (line1 == "TOTAL")
+                if (_settings.EnableDebugLog)
+                    Console.WriteLine($"Visor: [{line1}] / [{line2}]");
+                if (line1 == _settings.TotalKeyword)
                 {
-                    TxtTotalPrice.Text = $"{line2} €";
+                    TxtTotalPrice.Text = $"{line2} {_settings.CurrencySymbol}";
                     SetPanel(TotalPanel);
                 }
-                else if (line1 == "Gracias" || (line1.Length == 0 && line2.Length == 0))
+                else if (line1 == _settings.IdleKeyword || (line1.Length == 0 && line2.Length == 0))
                 {
                     SetPanel(WelcomePanel);
                 }

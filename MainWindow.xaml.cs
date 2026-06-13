@@ -19,6 +19,11 @@ namespace DoscarVgaDriver
             CmbBaudios.ItemsSource = new[] { 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200 };
             CmbBaudios.SelectedItem = _settings.BaudRate;
             TxtCharacters.Text = _settings.CharsPerLine.ToString();
+            TxtHeader.Text = _settings.HeaderText;
+            TxtCurrency.Text = _settings.CurrencySymbol;
+            TxtTotalKeyword.Text = _settings.TotalKeyword;
+            TxtIdleKeyword.Text = _settings.IdleKeyword;
+            ChkDebugLog.IsChecked = _settings.EnableDebugLog;
             Loaded += (_, _) => OpenVisor();
         }
 
@@ -53,6 +58,11 @@ namespace DoscarVgaDriver
             _settings.PortName = CmbComPort.Text.Trim();
             if (CmbBaudios.SelectedItem is int baudios) _settings.BaudRate = baudios;
             _settings.CharsPerLine = characters;
+            _settings.HeaderText = TxtHeader.Text;
+            _settings.CurrencySymbol = TxtCurrency.Text;
+            _settings.TotalKeyword = TxtTotalKeyword.Text.Trim();
+            _settings.IdleKeyword = TxtIdleKeyword.Text.Trim();
+            _settings.EnableDebugLog = ChkDebugLog.IsChecked == true;
             _settings.Guardar();
             return true;
         }

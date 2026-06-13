@@ -9,7 +9,16 @@ namespace DoscarVgaDriver
         public string PortName { get; set; } = "COM10";
         public int BaudRate { get; set; } = 9600;
         public int CharsPerLine { get; set; } = 20;
-        public string HeaderText { get; set; } = "¡Gracias por su visita!";
+
+        // Welcome header shown on the idle panel.
+        public string HeaderText { get; set; } = "ONGI ETORRI!";
+        // Symbol appended to prices and the total.
+        public string CurrencySymbol { get; set; } = "€";
+        // Payload of line 1 (P1) that switches the visor to a given panel.
+        public string TotalKeyword { get; set; } = "TOTAL";
+        public string IdleKeyword { get; set; } = "Gracias";
+        // When true, the raw frame bytes are logged to the console as hex.
+        public bool EnableDebugLog { get; set; } = false;
 
         private static string RutaArchivo => Path.Combine(AppContext.BaseDirectory, "config.json");
 

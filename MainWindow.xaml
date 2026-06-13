@@ -13,9 +13,23 @@
 
         <TextBlock Text="Caracteres por línea"/>
         <TextBox x:Name="TxtCharacters" Margin="0,2,0,10"/>
+
+        <TextBlock Text="Mensaje de bienvenida"/>
+        <TextBox x:Name="TxtHeader" Margin="0,2,0,10"/>
+
+        <TextBlock Text="Símbolo de moneda"/>
+        <TextBox x:Name="TxtCurrency" Margin="0,2,0,10"/>
         
         <CheckBox x:Name="ChkFullScreen" Content="Pantalla completa" Margin="0,0,0,10"
                   Click="FullScreen_Toggle"/>
+
+        <TextBlock Text="Palabra clave Total"/>
+        <TextBox x:Name="TxtTotalKeyword" Margin="0,2,0,10"/>
+
+        <TextBlock Text="Palabra clave Inicio"/>
+        <TextBox x:Name="TxtIdleKeyword" Margin="0,2,0,10"/>
+
+        <CheckBox x:Name="ChkDebugLog" Content="Registro de depuración (hex)" Margin="0,0,0,10"/>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Guardar" Width="80" Margin="0,0,8,0" Click="Save_Click"/>

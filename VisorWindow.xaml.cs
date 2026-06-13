@@ -11,9 +11,11 @@ namespace DoscarVgaDriver
 {
     public partial class VisorWindow : Window
     {
-        // Doscar frames every command as 0x04 0x01 <cmd> 0x0D, followed by a 20-char padded text payload for cursor commands (P1 = line 1, PE = line 2).
+        // Doscar frames every command as 0x04 0x01 <cmd> 0x17, followed by a 20-char padded text payload for cursor commands (P1 = line 1, PE = line 2).
+        // The separator between command and payload is ETB (0x17), not CR (0x0D).
         private const string FramePrefix = "\u0004\u0001";
         private const int PayloadLength = 20;
+        private const char CommandSeparator = '';
 
         private SerialPort _serialPort;
         private AppSettings _settings;
@@ -28,9 +30,6 @@ namespace DoscarVgaDriver
             PortInitialisation();
         }
 
-        // Fullscreen borderless on the secondary monitor (the 7" customer panel).
-        // With a single monitor (development) it stays a normal window that can be
-        // sent fullscreen on demand via the config window's checkbox.
         private void ConfigureKioskMode()
         {
             var secondary = System.Windows.Forms.Screen.AllScreens.FirstOrDefault(s => !s.Primary);
@@ -45,9 +44,7 @@ namespace DoscarVgaDriver
         private static extern uint SetThreadExecutionState(uint esFlags);
         private const uint EsContinuous = 0x80000000;
         private const uint EsDisplayRequired = 0x00000002;
-
-        // Single source of truth for fullscreen, shared by kiosk startup and the
-        // dev checkbox. Returns the new state so the checkbox can mirror it.
+        
         private bool _isFullScreen;
         private WindowStyle _windowedStyle;
         private ResizeMode _windowedResizeMode;
@@ -111,9 +108,12 @@ namespace DoscarVgaDriver
         private void PortInitialisation()
         {
             _serialPort = new SerialPort(_settings.PortName, _settings.BaudRate, Parity.None, 8, StopBits.One);
+            _serialPort.Encoding = System.Text.Encoding.GetEncoding("ISO-8859-1");
             _serialPort.DataReceived += Port_DataReceived;
             try
             {
+                _serialPort.DtrEnable = true;
+                _serialPort.RtsEnable = true;
                 _serialPort.Open();
             }
             catch (Exception ex)
@@ -136,7 +136,14 @@ namespace DoscarVgaDriver
             if (_serialPort == null) return;
             try
             {
-                _bufferBuilder.Append(_serialPort.ReadExisting());
+                var count = _serialPort.BytesToRead;
+                if (count == 0) return;
+
+                var bytes = new byte[count];
+                var read = _serialPort.Read(bytes, 0, count);
+
+                Console.WriteLine(BitConverter.ToString(bytes, 0, read));
+                _bufferBuilder.Append(_serialPort.Encoding.GetString(bytes, 0, read));
                 ProcessBuffer();
             }
             catch (Exception ex)
@@ -168,8 +175,8 @@ namespace DoscarVgaDriver
                 else
                 {
                     // Last segment: only complete once the padded payload is in.
-                    var cr = content.IndexOf('\r');
-                    if (cr < 0 || content.Length < cr + 1 + PayloadLength) return;
+                    var sep = content.IndexOf(CommandSeparator);
+                    if (sep < 0 || content.Length < sep + 1 + PayloadLength) return;
                     segment = content;
                     _bufferBuilder.Clear();
                 }
@@ -180,11 +187,11 @@ namespace DoscarVgaDriver
 
         private void HandleSegment(string segment)
         {
-            var cr = segment.IndexOf('\r');
-            if (cr < 0) return;
+            var sep = segment.IndexOf(CommandSeparator);
+            if (sep < 0) return;
 
-            var command = segment.Substring(FramePrefix.Length, cr - FramePrefix.Length);
-            var payload = segment.Substring(cr + 1).TrimEnd();
+            var command = segment.Substring(FramePrefix.Length, sep - FramePrefix.Length);
+            var payload = segment.Substring(sep + 1).TrimEnd();
 
             switch (command)
             {

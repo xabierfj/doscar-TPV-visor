@@ -6,7 +6,7 @@ namespace DoscarVgaDriver
 {
     public class AppSettings
     {
-        public string PortName { get; set; } = "COM11";
+        public string PortName { get; set; } = "COM10";
         public int BaudRate { get; set; } = 9600;
         public int CharsPerLine { get; set; } = 20;
         public string HeaderText { get; set; } = "¡Gracias por su visita!";

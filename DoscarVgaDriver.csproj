@@ -11,6 +11,10 @@
     <PublishReadyToRun>true</PublishReadyToRun>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32bit>true</Prefer32bit>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.IO.Ports" Version="6.0.0" />

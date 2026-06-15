@@ -4,64 +4,74 @@
         ResizeMode="NoResize"
         Cursor="None"
         Width="800"
-        Height="480"
-        Background="#F4F7F9"
+        Height="450"
+        Background="#E2E4D2"
         KeyDown="Window_KeyDown">
     <Window.Resources>
-        <SolidColorBrush x:Key="BgNatural" Color="#F7F6F2"/>
-        <SolidColorBrush x:Key="GreenForest" Color="#2D5A27"/>
-        <SolidColorBrush x:Key="SoftGreen" Color="#E8EFE9"/>
-        <SolidColorBrush x:Key="MainText" Color="#1E291B"/>
-        <SolidColorBrush x:Key="SecondaryText" Color="#556B2F"/>
+        <SolidColorBrush x:Key="BgNatural" Color="#E2E4D2"/>
+        <SolidColorBrush x:Key="GreenForest" Color="#455957"/>
+        <SolidColorBrush x:Key="SoftGreen" Color="#7BA7AF"/>
+        <SolidColorBrush x:Key="MainText" Color="#455957"/>
+        <SolidColorBrush x:Key="SecondaryText" Color="#7BA7AF"/>
         <SolidColorBrush x:Key="PureWhite" Color="#FFFFFF"/>
     </Window.Resources>
-    <Grid Background="{StaticResource BgNatural}">
+    <!-- Fixed 16:9 design canvas scaled by the Viewbox to fill the real screen
+         (e.g. 800x450 -> 1920x1080 = 2.4x) so every element grows proportionally.
+         Uniform keeps the aspect ratio; non-16:9 screens get undistorted letterbox. -->
+    <Viewbox Stretch="Uniform">
+      <Grid x:Name="RootGrid" Width="800" Height="450" Background="{StaticResource BgNatural}">
         <Grid x:Name="WelcomePanel" Visibility="Visible">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <TextBlock x:Name="TxtWelcome" Text="ONGI ETORRI!" FontSize="30" Margin="0,10,0,20"
                            Foreground="{StaticResource SecondaryText}" HorizontalAlignment="Center"/>
-                <Image Width="300" Source="images/logo.png" />
+                <Image Width="300" Source="images/logo.png"/>
             </StackPanel>
         </Grid>
-        <Grid Grid.Row="0" x:Name="ProductPanel" Visibility="Collapsed" Margin="30">
+        <Grid x:Name="ProductPanel" Visibility="Collapsed" Margin="30">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Text="Zure erosketa / Su compra" FontSize="20" FontWeight="SemiBold" 
+            <TextBlock Text="Zure erosketa / Su compra" FontSize="20" FontWeight="SemiBold"
                        Foreground="{StaticResource SecondaryText}" Margin="10,0,0,15"/>
-            <Border Grid.Row="1" Background="{StaticResource PureWhite}" CornerRadius="16" 
+            <Border Grid.Row="1" Background="{StaticResource PureWhite}" CornerRadius="16"
                     BorderBrush="{StaticResource SoftGreen}" BorderThickness="2">
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="5" Color="#CCCCCC" Direction="270" ShadowDepth="2" Opacity="0.5"/>
+                    <DropShadowEffect BlurRadius="5" Color="#A8B0A0" Direction="270" ShadowDepth="2" Opacity="0.5"/>
                 </Border.Effect>
-                <Grid Margin="30">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock x:Name="TxtProduct" Text="Oxigeno Activo" 
-                               FontSize="38" FontWeight="Bold" Foreground="{StaticResource MainText}" 
-                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="TxtPrize" Text="PVP: 6,75 €" Grid.Row="1"
-                               FontSize="54" FontWeight="Bold" Foreground="{StaticResource GreenForest}" 
-                               HorizontalAlignment="Right"/>
+                <!-- One product at a time: the current line, vertically centred. -->
+                <Grid Margin="30,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="TxtProductName" FontSize="44" FontWeight="SemiBold"
+                               Foreground="{StaticResource MainText}" TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TxtProductPrice" Grid.Column="1" FontSize="44" FontWeight="Bold"
+                               Foreground="{StaticResource GreenForest}" Margin="20,0,0,0"
+                               VerticalAlignment="Center"/>
                 </Grid>
             </Border>
         </Grid>
-        
+
         <Grid x:Name="TotalPanel" Visibility="Collapsed" Background="{StaticResource GreenForest}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <TextBlock Text="TOTALA / TOTAL" FontSize="20" FontWeight="Bold" 
+                <TextBlock Text="TOTALA / TOTAL" FontSize="20" FontWeight="Bold"
                            Foreground="{StaticResource SoftGreen}" HorizontalAlignment="Center"/>
-            
-                <TextBlock x:Name="TxtTotalPrice" Text="37,25 €" 
-                           FontSize="96" FontWeight="Bold" Foreground="{StaticResource PureWhite}" 
-                           HorizontalAlignment="Center" Margin="0,10"/>
-            
-                <TextBlock Text="Eskerrik asko! 💚" 
+
+                <TextBlock x:Name="TxtTotalPrice" Text="37,25 €"
+                           FontSize="96" FontWeight="Bold" Foreground="{StaticResource PureWhite}"
+                           HorizontalAlignment="Center" Margin="0,10" RenderTransformOrigin="0.5,0.5">
+                    <TextBlock.RenderTransform>
+                        <ScaleTransform x:Name="TotalScale" ScaleX="1" ScaleY="1"/>
+                    </TextBlock.RenderTransform>
+                </TextBlock>
+
+                <TextBlock Text="Eskerrik asko! 💚"
                            FontSize="22" Foreground="{StaticResource SoftGreen}" HorizontalAlignment="Center" Margin="0,20,0,0"/>
             </StackPanel>
         </Grid>
-    </Grid>
+      </Grid>
+    </Viewbox>
 </Window>

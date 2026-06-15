@@ -33,25 +33,51 @@ namespace DoscarVgaDriver
         // Text encoding used to decode the serial stream.
         public string Encoding { get; set; } = "ISO-8859-1";
 
-        private static string RutaArchivo => Path.Combine(AppContext.BaseDirectory, "config.json");
+        // Per-user, always writable. The exe may live in Program Files, where
+        // writing next to it would fail, so config lives in %AppData%\Doscar.
+        private static string RutaArchivo
+        {
+            get
+            {
+                var dir = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Doscar");
+                Directory.CreateDirectory(dir);
+                return Path.Combine(dir, "config.json");
+            }
+        }
+
+        // Older builds stored config next to the exe; read it once for migration.
+        private static string RutaLegado => Path.Combine(AppContext.BaseDirectory, "config.json");
 
         public static AppSettings Cargar()
         {
-            try
+            foreach (var ruta in new[] { RutaArchivo, RutaLegado })
             {
-                if (File.Exists(RutaArchivo))
-                    return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(RutaArchivo)) ?? new AppSettings();
-            }
-            catch
-            {
-                // Config ilegible o corrupta: arrancar con valores por defecto
+                try
+                {
+                    if (File.Exists(ruta))
+                        return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(ruta)) ?? new AppSettings();
+                }
+                catch
+                {
+                    // Config ilegible o corrupta: probar la siguiente ubicación / valores por defecto.
+                }
             }
             return new AppSettings();
         }
 
-        public void Guardar()
+        public bool Guardar()
         {
-            File.WriteAllText(RutaArchivo, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
+            try
+            {
+                File.WriteAllText(RutaArchivo, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DebugLog.Write($"Error guardando configuración: {ex.Message}");
+                return false;
+            }
         }
     }
 }

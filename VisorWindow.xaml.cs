@@ -11,10 +11,11 @@ namespace DoscarVgaDriver
 {
     public partial class VisorWindow : Window
     {
-        // Doscar frames every command as 0x04 0x01 <cmd> 0x17, followed by a 20-char padded text payload for cursor commands (P1 = line 1, PE = line 2).
+        // Doscar frames every command as 0x04 0x01 <cmd> 0x17, followed by a 20-char
+        // padded text payload for cursor commands (P1 = line 1, PE = line 2).
         // The separator between command and payload is ETB (0x17), not CR (0x0D).
-        private const string FramePrefix = "\u0004\u0001";
         private const int PayloadLength = 20;
+        private const string FramePrefix = "\u0004\u0001";
         private const char CommandSeparator = '';
 
         private SerialPort _serialPort;
@@ -22,6 +23,9 @@ namespace DoscarVgaDriver
         private readonly StringBuilder _bufferBuilder = new StringBuilder();
         private string _line1 = string.Empty;
 
+        // The product currently shown; tracked so the pole display's continuous
+        // re-sends of the same line don't trigger redundant UI updates.
+        private string _lastItemKey = string.Empty;
         private readonly object _portLock = new object();
         private System.Windows.Threading.DispatcherTimer _reconnectTimer;
         private bool _connected;
@@ -296,15 +300,33 @@ namespace DoscarVgaDriver
                 }
                 else if (line1 == _settings.IdleKeyword || (line1.Length == 0 && line2.Length == 0))
                 {
+                    ResetReceipt();
                     SetPanel(WelcomePanel);
                 }
                 else
                 {
-                    TxtProduct.Text = line1;
-                    TxtPrize.Text = line2;
+                    AddItem(line1, line2);
                     SetPanel(ProductPanel);
                 }
             });
+        }
+
+        // Update the product only when it differs from the last one, so the pole
+        // display's continuous re-sends of the same line don't cause flicker.
+        private void AddItem(string name, string price)
+        {
+            var key = name + "" + price;
+            if (key == _lastItemKey) return;
+            _lastItemKey = key;
+            TxtProductName.Text = name;
+            TxtProductPrice.Text = $"{price} {_settings.CurrencySymbol}";
+        }
+
+        private void ResetReceipt()
+        {
+            TxtProductName.Text = string.Empty;
+            TxtProductPrice.Text = string.Empty;
+            _lastItemKey = string.Empty;
         }
 
         private void SetPanel(UIElement panel)

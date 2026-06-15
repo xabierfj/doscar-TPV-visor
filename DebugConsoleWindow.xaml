@@ -3,18 +3,18 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Consola de depuración" Width="640" Height="420"
         WindowStartupLocation="CenterScreen"
-        Background="#1E1E1E">
+        Background="#2A3534">
     <DockPanel>
-        <Border DockPanel.Dock="Top" Background="#252526" BorderBrush="#3F3F46" BorderThickness="0,0,0,1">
+        <Border DockPanel.Dock="Top" Background="#455957" BorderBrush="#7BA7AF" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" Margin="6,4">
                 <CheckBox x:Name="ChkAutoScroll" Content="Auto-scroll" IsChecked="True"
-                          Foreground="#D4D4D4" VerticalAlignment="Center" Margin="4,0,12,0"/>
+                          Foreground="#E2E4D2" VerticalAlignment="Center" Margin="4,0,12,0"/>
                 <Button Content="Limpiar" Padding="12,2" Click="Clear_Click"/>
             </StackPanel>
         </Border>
         <TextBox x:Name="TxtOutput" IsReadOnly="True" IsReadOnlyCaretVisible="False"
                  FontFamily="Consolas" FontSize="13"
-                 Background="#1E1E1E" Foreground="#D4D4D4"
+                 Background="#2A3534" Foreground="#E2E4D2"
                  BorderThickness="0" Padding="8"
                  TextWrapping="NoWrap" AcceptsReturn="True"
                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>

@@ -21,7 +21,6 @@ namespace DoscarVgaDriver
             CmbComPort.Text = _settings.PortName;
             CmbBaudios.ItemsSource = new[] { 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200 };
             CmbBaudios.SelectedItem = _settings.BaudRate;
-            TxtCharacters.Text = _settings.CharsPerLine.ToString();
             TxtHeader.Text = _settings.HeaderText;
             TxtCurrency.Text = _settings.CurrencySymbol;
 
@@ -93,15 +92,9 @@ namespace DoscarVgaDriver
                 MessageBox.Show("Selecciona un puerto COM.", "Configuración");
                 return false;
             }
-            if (!int.TryParse(TxtCharacters.Text, out int characters) || characters < 1)
-            {
-                MessageBox.Show("Caracteres por línea debe ser un número mayor que 0.", "Configuración");
-                return false;
-            }
 
             _settings.PortName = CmbComPort.Text.Trim();
             if (CmbBaudios.SelectedItem is int baudios) _settings.BaudRate = baudios;
-            _settings.CharsPerLine = characters;
             _settings.HeaderText = TxtHeader.Text;
             _settings.CurrencySymbol = TxtCurrency.Text;
             if (CmbParity.SelectedItem is string parity) _settings.Parity = parity;
@@ -113,7 +106,11 @@ namespace DoscarVgaDriver
             _settings.TotalKeyword = TxtTotalKeyword.Text.Trim();
             _settings.IdleKeyword = TxtIdleKeyword.Text.Trim();
             _settings.EnableDebugLog = ChkDebugLog.IsChecked == true;
-            _settings.Guardar();
+            if (!_settings.Guardar())
+            {
+                MessageBox.Show("No se pudo guardar la configuración. Comprueba los permisos de escritura.", "Configuración");
+                return false;
+            }
             return true;
         }
 

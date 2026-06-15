@@ -12,9 +12,9 @@ secondary monitor on the TPV PC.
 Doscar TPV ──serial (com0com virtual pair)──> this app ──> customer screen
 ```
 
-- Doscar sends DSP800 commands framed as `0x04 0x01 <cmd> 0x0D`, followed by
-  20-char padded text payloads. `P1` positions on line 1, `PE` on line 2,
-  `C1X` clears the screen.
+- Doscar sends DSP800 commands framed as `0x04 0x01 <cmd> 0x17`, followed by
+  padded text payloads (width = *Caracteres por línea*, 20 by default). `P1`
+  positions on line 1, `PE` on line 2, `C1X` clears the screen.
 - Each complete line pair is classified and shown on one of three panels:
 
 | Screen from Doscar         | Panel shown                       |
@@ -69,5 +69,6 @@ in `bin/Release/net6.0-windows/win-x86/publish/`.
 - [DSP800 command set (gist)](https://gist.github.com/andersevenrud/e2725d99b0157fc1f7f5eccf47239837)
 - [Official DSP800 spec (PDF)](https://www.danapo.cz/user/related_files/dsp800.pdf)
 
-Note: the official spec terminates command frames with `ETB (0x17)`; observed
-Doscar traffic terminates them with `CR (0x0D)`.
+Note: the command/payload separator is `ETB (0x17)`, matching the official spec.
+(An earlier revision of this app assumed `CR (0x0D)`; observed Doscar traffic
+actually uses `ETB`.)

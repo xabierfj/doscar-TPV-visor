@@ -8,6 +8,7 @@ namespace DoscarVgaDriver
     {
         public string PortName { get; set; } = "COM10";
         public int BaudRate { get; set; } = 9600;
+        public int CharsPerLine { get; set; } = 20;
 
         // Welcome header shown on the idle panel.
         public string HeaderText { get; set; } = "ONGI ETORRI!";

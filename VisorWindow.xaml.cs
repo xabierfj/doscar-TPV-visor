@@ -26,7 +26,6 @@ namespace DoscarVgaDriver
         // The product currently shown; tracked so the pole display's continuous
         // re-sends of the same line don't trigger redundant UI updates.
         private string _lastItemKey = string.Empty;
-
         private readonly object _portLock = new object();
         private System.Windows.Threading.DispatcherTimer _reconnectTimer;
         private bool _connected;
